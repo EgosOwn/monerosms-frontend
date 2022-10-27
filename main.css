@@ -1,0 +1,58 @@
+
+/* define colors
+
+
+*/
+
+body{
+    /*color: #e36414;*/
+    color: #FFFFFF;
+    background-color: #020000;
+  }
+
+  .main{
+    margin-left: 10%;
+  }
+h1, h2, h3, h4, h5, h6{
+    font-family: 'Roboto', 'Helvetica Neue', Helvetica, Arial, sans-serif;
+}
+
+.login button, .login input[type="submit"]{
+    margin-left: 1%;
+}
+
+.desktopHeader{
+  display: none;
+}
+
+.draft{
+  padding: 1em;
+  margin-right: 60%;
+  margin-top: 1em;
+  border-radius: 5px;
+  background-color: #0F4C5C;
+}
+.draft label{
+  display: block;
+  margin-top: 1em;
+}
+.draft textarea{
+  vertical-align: top;
+  width: 75%;
+  max-width: 100%;
+  min-width: 100px;
+  height: 150px;
+}
+
+@media (min-width: 510px) {
+    .desktopHeader{
+        display: block;
+    }
+    .mobileHeader{
+        display: none;
+    }
+}
+
+.darkMode{
+
+}

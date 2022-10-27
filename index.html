@@ -1,0 +1,333 @@
+<!DOCTYPE html>
+<html lang="en">
+<meta charset="utf-8">
+<title>MoneroSMS</title>
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<script src="https://unpkg.com/vue@3.2.41/dist/vue.global.js" integrity="sha384-Oz4EwsIKBQvJDUayW6Bxtt3CwJEmUqI2UYxNiONOlISf30PLyX7Xt3enDht1O4uA" crossorigin="anonymous"></script>
+<link rel="icon" href="data:image/svg+xml,<svg xmlns=%22http://www.w3.org/2000/svg%22 viewBox=%2210 0 100 100%22><text y=%22.90em%22 font-size=%2290%22>📨</text></svg>">
+<link rel="stylesheet" href="main.css">
+<!--begin div hell-->
+<body>
+  <div id="app">
+    <div class="main">
+      <div v-if="userID">
+      <div>
+        <button v-if="! showUserID" @click="showUserID = userID">Show User ID (KEEP SAFE & SECRET)</button>
+        <span v-else><input type="text" v-model="showUserID"></span>
+      </div>
+
+        <div><span v-if="! RegExp('Error|Getting').test(moneroAddress)">Monero Address: </span>{{ moneroAddress }}</div>
+        <div><span v-if="! RegExp('Error|Getting').test(credits)">Credit Balance: </span>{{ credits }}</div>
+
+        <span>
+          <div><span>Phone Number: </span>{{ formatPhone(ownedNumber) }}</div>
+        </span>
+        <div v-if="RegExp('No').test(ownedNumber)">
+          <button @click="showNumbers()" v-if="! availableNumbers">Show Available Virtual Numbers</button>
+          <div v-if="availableNumbers">
+            <h1>Available Virtual Numbers</h1>
+            <table class="table table-striped">
+              <thead>
+                <tr>
+                  <th>Number</th>
+                </tr>
+              </thead>
+              <tbody>
+                <tr v-for="(number,i) in availableNumbers" :key="i">
+                   <th scope="row" v-if="number">{{ formatPhone(number)  }}</th>
+                   <td><button @click="buyNum" v-if="number" :data-number="number">Buy</button></td>
+                </tr>
+               </tbody>
+            </table>
+            <div v-if="availableNumbers.length === 0">No numbers available</div>
+            <div v-if="numberPurchaseMessage">{{  numberPurchaseMessage  }}</div>
+          </div>
+        </div>
+
+          <div v-else>
+            <div v-if="threads.length">
+              <span v-for="person in threads">
+                {{ person }}
+                <button @click="openThread(person)">Open Thread</button>
+              </span>
+              <div v-if="showingThreadNum">
+                <div v-for="message in threadMessages">
+                  {{ message }}
+                </div>
+              </div>
+            </div>
+            <div v-else>
+              No threads
+            </div>
+            <form class="draft" @submit="sendSMS">
+              <label>
+                Phone Number:
+                <input type="tel" v-model="sendToNumber" placeholder="Phone Number" maxlength="10" minlength="10" size="10" pattern="^\d{10}$" required>
+              </label>
+              <label>
+                Message:
+                <textarea v-model="messageToSend" placeholder="Message" required></textarea>
+              </label>
+              <input @submit.prevent="onSubmit" type="submit" :disabled="disableSMSSend" value="Send">
+            </form>
+          </div>
+</div>
+<div v-else>
+<pre class="desktopHeader">
+
+__   __                                     _____ __   __   _____
+|    |    __.  , __     ___  .___    __.   (      |    |   (
+|\  /|  .'   \ |'  `. .'   ` /   \ .'   \   `--.  |\  /|    `--.
+| \/ |  |    | |    | |----' |   ' |    |      |  | \/ |       |
+/    /   `._.' /    | `.___, /      `._.' \___.'  /    /  \___.'
+
+</pre>
+  <h1 class="mobileHeader">MoneroSMS</h1>
+          <form class="login">
+            <input type="text" v-model="userIDInput" placeholder="Enter your account ID" required>
+
+            <button @submit.prevent="onSubmit" @click="userID = userIDInput; userLogin()">Login</button>
+            <button @submit.prevent="onSubmit" @click="userID = crypto.randomUUID(); userLogin()">Generate Account</button>
+          </form>
+</div>
+      </div>
+    </div>
+    <script>
+    const { createApp } = Vue
+
+
+    let app = createApp({
+      computed: {
+        crypto: () => window.crypto
+      },
+      data() {
+        return {
+          userIDInput: '',
+          userID: "",
+          showUserID: "",
+          backend: 'https://api.sms.voidnet.tech/',
+          availableNumbers: "",
+          credits: "",
+          threads: [],
+          ownedNumber: "Getting number...",
+          numberPurchaseMessage: "",
+          moneroAddress: 'Getting monero address...',
+          darkMode: true,
+          disableSMSSend: false,
+          messageToSend: "",
+          sendToNumber: "",
+          showingThreadNum: "",
+          threadOffset: 0,
+          threadMessages: [],
+          lastThreadLineHeader: 0,
+          threadLineHeader: 0
+        }
+      },
+      methods: {
+        openThread(num){
+          this.showingThreadNum = num
+          this.threadOffset = 0
+          this.threadMessages.length = 0
+          this.threadLineHeader = 0
+          this.lastThreadLineHeader = 0
+          this.getThreadMessages(num)
+        },
+        getThreadMessages(num){
+          if (!num){return}
+          fetch(this.backend + this.userID + '/thread/' + num + '/' + Number(this.threadOffset).toString()).then(response => {
+            if (response.ok) {
+              console.debug(response.headers)
+              console.debug(response.headers.get('x-total-lines'))
+              this.threadLineHeader = parseInt(response.headers.get('x-total-lines'))
+              return response.text()
+            } else {
+              throw new Error('Network response was not ok.')
+            }
+          }).then(messages => {
+            if (this.lastThreadLineHeader === this.threadLineHeader){
+              return
+            }
+            this.lastThreadLineHeader = this.threadLineHeader
+
+            messages = messages.split('\n')
+            if (messages.length > 0){
+              for (let i = 0; i < messages.length; i++){
+                if (messages[i] !== ''){
+                  this.threadMessages.push(messages[i])
+                }
+              }
+              this.threadOffset = this.threadLineHeader
+            }
+          })
+        },
+        sendSMS(){
+          this.disableSMSSend = true
+          fetch(this.backend + this.userID + '/send/' + this.sendToNumber, {
+            method: 'POST',
+            body: this.messageToSend
+          }).then(resp => {
+            this.disableSMSSend = false
+            if (resp.status === 200) {
+              this.messageToSend = ""
+            }
+            else{
+              console.debug(resp)
+            }
+          }).catch(err => {
+            this.disableSMSSend = false
+            console.log(err)
+          })
+          return false
+        },
+        getThreads(doInterval){
+          let updateThreads = async (data) => {
+            if (! this.userID){
+              return
+            }
+            let response = await fetch(this.backend + this.userID + '/list')
+            if (response.ok){
+              let textResp = await response.text()
+              if (! RegExp('You').test(textResp)){
+                // Only update threads that changed
+                let newThreads = textResp.split('\n')
+                for (let i = 0; i < newThreads.length; i++){
+                  newThreads[i] = newThreads[i].trim()
+                  if (! this.threads.includes(newThreads[i])){
+                    if (newThreads[i]){
+                      console.debug('added thread')
+                      this.threads.push(newThreads[i])
+                    }
+                  }
+                }
+                let removeThreads = []
+                for (let i = 0; i < this.threads.length; i++){
+                  this.threads[i] = this.threads[i].trim()
+                  if (! newThreads.includes(this.threads[i])){
+                    if (this.threads[i]){
+                      removeThreads.push(this.threads[i])
+                    }
+                  }
+                }
+                for (let i = 0; i < removeThreads.length; i++){
+                  this.threads.splice(this.threads.indexOf(removeThreads[i]), 1)
+                }
+              }
+            }
+        }
+        updateThreads()
+        if (doInterval){setInterval(updateThreads, 10000)}
+        },
+        async buyNum(e){
+          let numToBuy = e.target.dataset.number
+          console.log("Buying number " + numToBuy)
+          fetch(this.backend + this.userID + '/buynumber/' + numToBuy, {'method': 'POST'}).catch((err) => {
+            console.log(err)
+            this.numberPurchaseMessage = "Error purchasing number"
+          }).then((res) =>{
+            if (res.ok) {
+              console.log("Number bought")
+              this.ownedNumber = numToBuy
+              this.numberPurchaseMessage = "Successfully purchased number"
+            } else {
+              if (res.status === 402){
+                console.debug("Not enough credits")
+                this.numberPurchaseMessage = "Not enough credits"
+              } else {
+                this.numberPurchaseMessage = "Error purchasing number"
+                console.log("Error buying number " + res.status)
+              }
+            }
+          })
+        },
+        async userLogin() {
+          this.getXMRAddress()
+          this.getCredits()
+          this.getThreads(false)
+          await this.getOwnedNumber()
+
+        },
+        async getText(endpoint){
+          let response = await fetch(this.backend + endpoint)
+          if (! response.ok) {
+            throw new Error(`HTTP error! status: ${response.status}`);
+          } else {
+            return response.text();
+          }
+        },
+        formatPhone(phoneNumberString) {
+            let cleaned = ('' + phoneNumberString).replace(/\D/g, '')
+            let match = cleaned.match(/^(\d{3})(\d{3})(\d{4})$/)
+            if (match) {
+              return '(' + match[1] + ') ' + match[2] + '-' + match[3]
+            }
+            return null;
+        },
+        async getCredits(){
+          this.getText(this.userID + '/creditbal').then((data) => {
+            this.credits = data
+          }).catch((error) => {
+            this.credits = 'Error getting credit balance'
+          })
+        },
+        async getXMRAddress() {
+          this.getText(this.userID + '/get_user_wallet').then((data) => {
+            this.moneroAddress = data
+          }).catch((error) => {
+            this.moneroAddress = 'Error getting monero address'
+          })
+        },
+        async getOwnedNumber() {
+          return fetch(this.backend + this.userID + '/number').then((response) => {
+            if (response.status == 402){
+              this.ownedNumber = "No number owned"
+            }
+            else{
+              response.text().then((num) => {
+                this.ownedNumber = num
+              })
+            }
+          }).catch((error) => {
+            console.debug(error)
+            this.ownedNumber = 'Error getting phone number'
+          })
+        },
+        async showNumbers(e) {
+          let req = await fetch(this.backend + 'availablenumbers')
+          let numbers = await req.text()
+          this.availableNumbers = numbers.replaceAll('\n\n', '').split('\n').map((number) => {
+            return number
+          })
+        }
+      },
+      mounted() {
+        // do this to get a connection to the backend so we don't have to wait for DNS later
+        fetch(this.backend + 'ping')
+        this.getThreads(true)
+        setInterval(()=>{
+          this.getThreadMessages(this.showingThreadNum)
+        }, 5000)
+      }
+    })
+    app.mount('#app')
+    </script>
+
+
+<!--
+  MoneroSMS Web Frontend
+  Copyright (C) 2022  VoidNetwork LLC
+
+  This program is free software: you can redistribute it and/or modify
+  it under the terms of the GNU Affero General Public License as
+  published by the Free Software Foundation, either version 3 of the
+  License, or (at your option) any later version.
+
+  This program is distributed in the hope that it will be useful,
+  but WITHOUT ANY WARRANTY; without even the implied warranty of
+  MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+  GNU Affero General Public License for more details.
+
+  You should have received a copy of the GNU Affero General Public License
+  along with this program.  If not, see <https://www.gnu.org/licenses/>.
+
+-->
+</body>
