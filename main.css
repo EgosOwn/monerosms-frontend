@@ -10,6 +10,18 @@ body{
     background-color: #020000;
   }
 
+
+  .from-us{
+    margin-left: 2em;
+    margin-right: 75%;
+    background-color: #e36414;
+    padding: 10px;
+  }
+
+  .msgBreak{
+    margin-top: 1em;
+  }
+
   .main{
     margin-left: 10%;
   }

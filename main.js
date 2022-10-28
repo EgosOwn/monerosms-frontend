@@ -52,11 +52,32 @@ let app = createApp({
         }
         this.lastThreadLineHeader = this.threadLineHeader
 
+        let fromUs = "from-us"
+        let applyBreak = true
+
         messages = messages.split('\n')
         if (messages.length > 0){
           for (let i = 0; i < messages.length; i++){
+            applyBreak = true
             if (messages[i] !== ''){
-              this.threadMessages.push(messages[i])
+
+              if (messages[i].startsWith(this.ownedNumber)){
+                fromUs = "from-us"
+                messages[i] = messages[i].replace(this.ownedNumber, this.formatPhone(this.ownedNumber))
+              }
+              else if(messages[i].startsWith(this.showingThreadNum)){
+                fromUs = "from-them"
+                messages[i] = messages[i].replace(this.showingThreadNum, this.formatPhone(this.showingThreadNum))
+              }
+              else{
+                applyBreak = false
+              }
+              if (applyBreak){
+                fromUs += " msgBreak"
+              }
+
+              this.threadMessages.push([messages[i], fromUs])
+
             }
           }
           this.threadOffset = this.threadLineHeader
@@ -97,7 +118,6 @@ let app = createApp({
               newThreads[i] = newThreads[i].trim()
               if (! this.threads.includes(newThreads[i])){
                 if (newThreads[i]){
-                  console.debug('added thread')
                   this.threads.push(newThreads[i])
                 }
               }

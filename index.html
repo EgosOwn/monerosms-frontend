@@ -53,7 +53,7 @@
               </span>
               <div v-if="showingThreadNum">
                 <div v-for="message in threadMessages">
-                  {{ message }}
+                  <div :class="message[1]">{{ message[0] }}</div>
                 </div>
               </div>
             </div>
@@ -85,7 +85,7 @@ __   __                                     _____ __   __   _____
 </pre>
   <h1 class="mobileHeader">MoneroSMS</h1>
           <form class="login">
-            <input type="text" v-model="userIDInput" placeholder="Enter your account ID" required>
+            <input type="password" v-model="userIDInput" placeholder="Enter your account ID" required>
 
             <button @submit.prevent="onSubmit" @click="userID = userIDInput; userLogin()">Login</button>
             <button @submit.prevent="onSubmit" @click="userID = crypto.randomUUID(); userLogin()">Generate Account</button>
