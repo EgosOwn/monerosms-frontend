@@ -45,10 +45,23 @@
         </div>
 
           <div v-else>
+            <form class="draft" @submit="sendSMS" @submit.prevent="onSubmit">
+              <label>
+                Phone Number:
+                <input type="tel" v-model="sendToNumber" placeholder="Phone Number" maxlength="10" minlength="10" size="10" pattern="^\d{10}$" required>
+              </label>
+              <label>
+                Message:
+                <textarea v-model="messageToSend" placeholder="Message" required></textarea>
+              </label>
+              <input type="submit" :disabled="disableSMSSend" value="Send">
+              <div v-if="sendMsgErr">Error sending message: {{ sendMsgErr }}</div>
+            </form>
             <div v-if="threads.length">
               <br>
               <span v-for="person in threads">
                 <button @click="openThread(person)">{{ formatPhone(person) }} - Open Thread</button>
+                <button @click="deleteThread(person)">Delete Thread</button>
                 <br><br>
               </span>
               <div v-if="showingThreadNum">
@@ -60,17 +73,7 @@
             <div v-else>
               No threads
             </div>
-            <form class="draft" @submit="sendSMS">
-              <label>
-                Phone Number:
-                <input type="tel" v-model="sendToNumber" placeholder="Phone Number" maxlength="10" minlength="10" size="10" pattern="^\d{10}$" required>
-              </label>
-              <label>
-                Message:
-                <textarea v-model="messageToSend" placeholder="Message" required></textarea>
-              </label>
-              <input @submit.prevent="onSubmit" type="submit" :disabled="disableSMSSend" value="Send">
-            </form>
+
           </div>
 </div>
 <div v-else>

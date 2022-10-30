@@ -20,6 +20,7 @@ let app = createApp({
       darkMode: true,
       disableSMSSend: false,
       messageToSend: "",
+      sendMsgErr: "",
       sendToNumber: "",
       showingThreadNum: "",
       threadOffset: 0,
@@ -53,29 +54,32 @@ let app = createApp({
         this.lastThreadLineHeader = this.threadLineHeader
 
         let fromUs = "from-us"
-        let applyBreak = true
+        let applyBreak = false
 
         messages = messages.split('\n')
         if (messages.length > 0){
           for (let i = 0; i < messages.length; i++){
-            applyBreak = true
+            applyBreak = false
+            fromUs = fromUs.replaceAll(" msgBreak", "")
             if (messages[i] !== ''){
+
 
               if (messages[i].startsWith(this.ownedNumber)){
                 fromUs = "from-us"
                 messages[i] = messages[i].replace(this.ownedNumber, this.formatPhone(this.ownedNumber))
+                applyBreak = true
               }
               else if(messages[i].startsWith(this.showingThreadNum)){
                 fromUs = "from-them"
                 messages[i] = messages[i].replace(this.showingThreadNum, this.formatPhone(this.showingThreadNum))
+                applyBreak = true
               }
-              else{
-                applyBreak = false
-              }
+
               if (applyBreak){
                 fromUs += " msgBreak"
               }
 
+              console.debug(messages[i] + " " + fromUs)
               this.threadMessages.push([messages[i], fromUs])
 
             }
@@ -85,6 +89,7 @@ let app = createApp({
       })
     },
     sendSMS(){
+      this.sendMsgErr = ""
       this.disableSMSSend = true
       fetch(this.backend + this.userID + '/send/' + this.sendToNumber, {
         method: 'POST',
@@ -95,10 +100,14 @@ let app = createApp({
           this.messageToSend = ""
         }
         else{
-          console.debug(resp)
+          resp.text().then(text => {
+            this.sendMsgErr = text
+            console.debug(text)
+        })
         }
       }).catch(err => {
         this.disableSMSSend = false
+        this.sendMsgErr = err.toString()
         console.log(err)
       })
       return false
@@ -139,6 +148,17 @@ let app = createApp({
     }
     updateThreads()
     if (doInterval){setInterval(updateThreads, 10000)}
+    },
+    deleteThread(num){
+      fetch(this.backend + this.userID + '/delete/' + num, {'method': 'POST'}).catch((err) => {
+        alert("Failed to delete thread. Please report if this keeps occurring.")
+      }).then((res) =>{
+        if (! res.ok){
+          alert("Failed to delete thread. Please report if this keeps occurring.")
+          return
+        }
+        this.getThreads(false)
+      })
     },
     async buyNum(e){
       let numToBuy = e.target.dataset.number

@@ -12,13 +12,30 @@ body{
 
 
   .from-us{
-    margin-left: 2em;
-    margin-right: 75%;
-    background-color: #e36414;
+    margin-left: 25%;
+    background-color: #0F4C5C;
     padding: 10px;
   }
 
+  .from-them{
+    background-color: #e36414;
+    margin-right: 75%;
+  }
+
+  .from-us, .from-them{
+    padding: 10px;
+    width: 25%;
+    font-size: 1.5em;
+    font-family: Verdana, Geneva, Tahoma, sans-serif;
+    word-break: break-all;
+  }
+
+  .sendMsgErr{
+    color: yellow;
+  }
+
   .msgBreak{
+    font-size: 1.0em;
     margin-top: 1em;
   }
 
