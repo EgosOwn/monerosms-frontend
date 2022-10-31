@@ -17,7 +17,13 @@
       </div>
 
         <div><span v-if="! RegExp('Error|Getting').test(moneroAddress)">Monero Address: </span>{{ moneroAddress }}</div>
-        <div><span v-if="! RegExp('Error|Getting').test(credits)">Credit Balance: </span>{{ credits }}</div>
+        <div><span v-if="! RegExp('Error|Getting').test(credits)">Credit Balance: </span>{{ credits }} <span v-if="credits === 0"></span></div>
+<details>
+<summary>Pricing information</summary>
+<pre>
+{{ pricingInfo }}
+</pre>
+</details>
 
         <span>
           <div><span>Phone Number: </span>{{ formatPhone(ownedNumber) }}</div>
@@ -61,7 +67,7 @@
               <br>
               <span v-for="person in threads">
                 <button @click="openThread(person)">{{ formatPhone(person) }} - Open Thread</button>
-                <button @click="deleteThread(person)">Delete Thread</button>
+                <button @click="deleteThread(person)" class="danger">Delete Thread</button>
                 <br><br>
               </span>
               <div v-if="showingThreadNum">

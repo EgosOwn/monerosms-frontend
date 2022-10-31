@@ -3,7 +3,8 @@ const { createApp } = Vue
 
 let app = createApp({
   computed: {
-    crypto: () => window.crypto
+    crypto: () => window.crypto,
+    onLine: () => window.navigator.onLine
   },
   data() {
     return {
@@ -26,7 +27,8 @@ let app = createApp({
       threadOffset: 0,
       threadMessages: [],
       lastThreadLineHeader: 0,
-      threadLineHeader: 0
+      threadLineHeader: 0,
+      pricingInfo: ""
     }
   },
   methods: {
@@ -89,6 +91,10 @@ let app = createApp({
       })
     },
     sendSMS(){
+      if (! this.onLine){
+        this.sendMsgErr = "You are offline, cannot send message"
+        return
+      }
       this.sendMsgErr = ""
       this.disableSMSSend = true
       fetch(this.backend + this.userID + '/send/' + this.sendToNumber, {
@@ -150,6 +156,11 @@ let app = createApp({
     if (doInterval){setInterval(updateThreads, 10000)}
     },
     deleteThread(num){
+      let choice = confirm("Are you sure you want to delete this thread?")
+      if (! choice){
+        return
+      }
+
       fetch(this.backend + this.userID + '/delete/' + num, {'method': 'POST'}).catch((err) => {
         alert("Failed to delete thread. Please report if this keeps occurring.")
       }).then((res) =>{
@@ -186,6 +197,7 @@ let app = createApp({
       this.getXMRAddress()
       this.getThreads(false)
       this.getCredits()
+      this.getPricingInfo()
       await this.getOwnedNumber()
 
     },
@@ -240,6 +252,21 @@ let app = createApp({
       let numbers = await req.text()
       this.availableNumbers = numbers.replaceAll('\n\n', '').split('\n').map((number) => {
         return number
+      })
+    },
+    async getPricingInfo(){
+      fetch (this.backend + 'pricing').then((response) => {
+        if (! response.ok){
+          this.pricingInfo = "Error getting pricing info"
+        }
+        else{
+          response.text().then((data) => {
+            this.pricingInfo = data
+          })
+        }
+      }).catch((error) => {
+        this.pricingInfo = "Error getting pricing info"
+        console.debug(error)
       })
     }
   },
