@@ -3,7 +3,8 @@
 <meta charset="utf-8">
 <title>MoneroSMS</title>
 <meta name="viewport" content="width=device-width, initial-scale=1">
-<script src="https://unpkg.com/vue@3.2.41/dist/vue.global.js" integrity="sha384-Oz4EwsIKBQvJDUayW6Bxtt3CwJEmUqI2UYxNiONOlISf30PLyX7Xt3enDht1O4uA" crossorigin="anonymous"></script>
+<script src="vue.global.prod.js"></script>
+<script src="main.js" defer></script>
 <link rel="icon" href="data:image/svg+xml,<svg xmlns=%22http://www.w3.org/2000/svg%22 viewBox=%2210 0 100 100%22><text y=%22.90em%22 font-size=%2290%22>📨</text></svg>">
 <link rel="stylesheet" href="main.css">
 <!--begin div hell-->
@@ -26,7 +27,8 @@
 </details>
 
         <span>
-          <div><span>Phone Number: </span>{{ formatPhone(ownedNumber) }}</div>
+          <div v-if="RegExp('^[0-9]+$').test(ownedNumber)"><span>Phone Number: </span>{{ formatPhone(ownedNumber) }}</div>
+          <div v-else><span>Phone Number: </span>{{ ownedNumber }}</div>
         </span>
         <div v-if="RegExp('No').test(ownedNumber)">
           <button @click="showNumbers()" v-if="! availableNumbers">Show Available Virtual Numbers</button>
@@ -102,9 +104,6 @@ __   __                                     _____ __   __   _____
 </div>
       </div>
     </div>
-    <script src="main.js"></script>
-
-
 <!--
   MoneroSMS Web Frontend
   Copyright (C) 2022  VoidNetwork LLC
