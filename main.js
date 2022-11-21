@@ -280,6 +280,9 @@ let app = createApp({
     setInterval(()=>{
         this.getCredits()
     }, 30000)
+    if (document.location.hostname.endsWith(".onion")){
+      this.backend = "http://api.xmr4smsoncunkfgfjr6xmxl57afsmuu6rg2bwuysbgg4wdtoawamwxad.onion/"
+    }
 
   }
 })
