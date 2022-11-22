@@ -100,7 +100,7 @@ __   __                                     _____ __   __   _____
             <input type="password" v-model="userIDInput" placeholder="Enter your account ID" required>
 
             <button @submit.prevent="onSubmit" @click="userID = userIDInput; userLogin()">Login</button>
-            <button @submit.prevent="onSubmit" @click="userID = (crypto.randomUUID().substring(6) + crypto.randomUUID().substring(30)).replaceAll('-',''); userLogin()">Generate Account</button>
+            <button @submit.prevent="onSubmit" @click="userID = randomID(); userLogin()">Generate Account</button>
           </form>
 </div>
 <br><br>

@@ -3,7 +3,14 @@ const { createApp } = Vue
 
 let app = createApp({
   computed: {
-    crypto: () => window.crypto,
+    randomID: () => {
+      let buf2hex = function(buffer) { // buffer is an ArrayBuffer
+        return [...new Uint8Array(buffer)]
+            .map(x => x.toString(16).padStart(2, '0'))
+            .join('');
+      }
+      return buf2hex(window.crypto.getRandomValues(new Uint8Array(25)))
+      },
     onLine: () => window.navigator.onLine
   },
   data() {
