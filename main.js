@@ -3,7 +3,7 @@ const { createApp } = Vue
 
 let app = createApp({
   computed: {
-    randomID: () => {
+    randomID: () => function(){
       let buf2hex = function(buffer) { // buffer is an ArrayBuffer
         return [...new Uint8Array(buffer)]
             .map(x => x.toString(16).padStart(2, '0'))
