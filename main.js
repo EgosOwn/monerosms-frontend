@@ -271,7 +271,11 @@ let app = createApp({
     }
   },
   mounted() {
+
     // do this to get a connection to the backend so we don't have to wait for DNS later
+    if (document.location.hostname.endsWith(".onion")){
+      this.backend = "http://api.xmr4smsoncunkfgfjr6xmxl57afsmuu6rg2bwuysbgg4wdtoawamwxad.onion/"
+    }
     fetch(this.backend + 'ping')
     this.getThreads(true)
     setInterval(()=>{
@@ -280,9 +284,6 @@ let app = createApp({
     setInterval(()=>{
         this.getCredits()
     }, 30000)
-    if (document.location.hostname.endsWith(".onion")){
-      this.backend = "http://api.xmr4smsoncunkfgfjr6xmxl57afsmuu6rg2bwuysbgg4wdtoawamwxad.onion/"
-    }
 
   }
 })
