@@ -32,8 +32,7 @@
           <div v-else><span>Phone Number: </span>{{ ownedNumber }}</div>
         </span>
         <div v-if="RegExp('No').test(ownedNumber)">
-          <button @click="showNumbers()" v-if="! availableNumbers">Show Available Virtual Numbers</button>
-          <div v-if="availableNumbers">
+          <div v-if="availableNumbers.length">
             <h1>Available Virtual Numbers</h1>
             <table class="table table-striped">
               <thead>
@@ -48,9 +47,12 @@
                 </tr>
                </tbody>
             </table>
-            <div v-if="availableNumbers.length === 0">No numbers available</div>
             <div v-if="numberPurchaseMessage">{{  numberPurchaseMessage  }}</div>
           </div>
+          <div v-else>
+            <h1>OUT OF NUMBERS. Check back every day, we restock frequently!</h1>
+          </div>
+
         </div>
 
           <div v-else>

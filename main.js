@@ -18,8 +18,8 @@ let app = createApp({
       userIDInput: '',
       userID: "",
       showUserID: "",
-      backend: 'https://api.sms.voidnet.tech/',
-      availableNumbers: "",
+      backend: 'https://api.monerosms.com/',
+      availableNumbers: [],
       credits: "",
       threads: [],
       ownedNumber: "Getting number...",
@@ -35,7 +35,8 @@ let app = createApp({
       threadMessages: [],
       lastThreadLineHeader: 0,
       threadLineHeader: 0,
-      pricingInfo: ""
+      pricingInfo: "",
+      email: 0,
     }
   },
   methods: {
@@ -111,6 +112,8 @@ let app = createApp({
         this.disableSMSSend = false
         if (resp.status === 200) {
           this.messageToSend = ""
+          this.getThreads()
+          this.getThreadMessages()
         }
         else{
           resp.text().then(text => {
@@ -125,6 +128,72 @@ let app = createApp({
       })
       return false
     },
+    async isUsingEmail(){
+      fetch(this.backend + this.userID + '/usingemail').then(response => {
+        if (response.ok) {
+          return response.text()
+        } else {
+          throw new Error('Network response was not ok.')
+        }
+      }).then(email => {
+        if (email === "1"){
+          this.email = 1
+        }
+        else{
+          this.email = 0
+        }
+      })
+    },
+    setEmail(){
+      if (! this.onLine){
+        alert("You are offline, cannot set email")
+        return
+      }
+      let email = prompt("Enter your email address for email relaying.\nLeave blank or cancel to disable email relaying.")
+      if (! this.onLine){
+        alert("You are offline, cannot set email")
+        return
+      }
+      if (email === null){
+        email = "none"
+      }
+      else{
+        email = email.trim()
+        if (email === ""){
+          email = "none"
+        }
+        else{
+          if (! RegExp('@').test(email)){
+            alert("Invalid email address")
+            return
+          }
+        }
+      }
+      fetch(this.backend + this.userID + '/setemail/' + email, {
+        method: 'POST'
+      }).then(resp => {
+        if (resp.status === 200) {
+
+          if (email === "none"){
+            this.email = 0
+            alert("Email disabled. You will see new messages in the UI")
+          }
+          else{
+            this.email = 1
+            alert("Email set to " + email + ". You will not see new messages in this UI.")
+          }
+        }
+        else{
+          resp.text().then(text => {
+            alert(text)
+            console.debug(text)
+        })
+        }
+      }).catch(err => {
+        alert(err.toString())
+        console.log(err)
+      })
+    },
     getThreads(doInterval){
       let updateThreads = async (data) => {
         if (! this.userID || document.hidden){
@@ -133,6 +202,10 @@ let app = createApp({
         let response = await fetch(this.backend + this.userID + '/list')
         if (response.ok){
           let textResp = await response.text()
+          if (RegExp('No').test(textResp)){
+            this.threads.length = 0
+            return
+          }
           if (! RegExp('You').test(textResp)){
             // Only update threads that changed
             let newThreads = textResp.split('\n')
@@ -189,6 +262,7 @@ let app = createApp({
           console.log("Number bought")
           this.ownedNumber = numToBuy
           this.numberPurchaseMessage = "Successfully purchased number"
+          this.getCredits()
         } else {
           if (res.status === 402){
             console.debug("Not enough credits")
@@ -201,12 +275,31 @@ let app = createApp({
       })
     },
     async userLogin() {
+      if (! this.onLine){
+        alert("You are offline, cannot login")
+        return
+      }
+      if (this.userID.length > 100){
+        alert("User ID too long")
+        return
+      }
+      if (this.userID.length < 8){
+        alert("User ID too short")
+        return
+      }
+      if (RegExp(' ').test(this.userID)){
+        alert("User ID cannot contain spaces")
+        return
+      }
+      this.isUsingEmail()
       this.getXMRAddress()
       this.getThreads(false)
       this.getCredits()
       this.getPricingInfo()
       await this.getOwnedNumber()
-
+      if (this.ownedNumber.startsWith("No")) {
+        this.showNumbers()
+      }
     },
     async getText(endpoint){
       let response = await fetch(this.backend + endpoint)
@@ -224,7 +317,7 @@ let app = createApp({
         }
         return null;
     },
-    getCredits(){
+    async getCredits(){
       if (! this.userID || document.hidden){return}
       this.getText(this.userID + '/creditbal').then((data) => {
         this.credits = data
@@ -254,12 +347,18 @@ let app = createApp({
         this.ownedNumber = 'Error getting phone number'
       })
     },
+
     async showNumbers(e) {
-      let req = await fetch(this.backend + 'availablenumbers')
-      let numbers = await req.text()
-      this.availableNumbers = numbers.replaceAll('\n\n', '').split('\n').map((number) => {
-        return number
-      })
+      try {
+        const req = await fetch(this.backend + 'availablenumbers');
+        const numbersText = await req.text();
+
+        this.availableNumbers = numbersText.split('\n').filter(number => {
+          return typeof number === 'string' && number.trim().length > 0;
+        });
+      } catch (error) {
+        console.error("Error fetching or processing numbers:", error);
+      }
     },
     async getPricingInfo(){
       fetch (this.backend + 'pricing').then((response) => {
@@ -290,6 +389,7 @@ let app = createApp({
     }, 5000)
     setInterval(()=>{
         this.getCredits()
+        this.getPricingInfo()
     }, 30000)
 
   }
